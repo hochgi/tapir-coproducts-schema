@@ -60,20 +60,23 @@ object Base {
       default = None)
 
   implicit val yConfSchema: Schema[YConf] = {
+    val y1ConfSName = Schema.SName("Y1Conf")
     val y1ConfSchema: Schema[YConf.Y1Conf] =
       Schema
         .derived[YConf.Y1Conf]
-        .name(Schema.SName("Y1Conf"))
+        .name(y1ConfSName)
 
+    val y2ConfSName = Schema.SName("Y2Conf")
     val y2ConfSchema: Schema[YConf.Y2Conf] =
       Schema
         .derived[YConf.Y2Conf]
-        .name(Schema.SName("Y2Conf"))
+        .name(y2ConfSName)
 
+    val y3ConfSName = Schema.SName("Y3Conf")
     val y3ConfSchema: Schema[YConf.Y3Conf] =
       Schema
         .derived[YConf.Y3Conf]
-        .name(Schema.SName("Y3Conf"))
+        .name(y3ConfSName)
 
 //    // This does not work:
 //    Schema.oneOfUsingField[YConf, YEnum](_.kind, _.toString)(
@@ -91,11 +94,18 @@ object Base {
     }.toMap)
     val sname = SName("hochgi.repro.datatypes.YConf", Nil)
     val subtypes = mappingAsList.map(_._2)
-    Schema(SCoproduct(subtypes, Some(discriminator)) {
+    val schemaType = SCoproduct[YConf](subtypes, Some(discriminator)) {
       case y: Y1Conf => Some(SchemaWithValue(y1ConfSchema.asInstanceOf[Schema[Any]], y.kind))
       case y: Y2Conf => Some(SchemaWithValue(y2ConfSchema.asInstanceOf[Schema[Any]], y.kind))
       case y: Y3Conf => Some(SchemaWithValue(y3ConfSchema.asInstanceOf[Schema[Any]], y.kind))
-    }, Some(sname))
+    }.addDiscriminatorField(
+      discriminatorName = FieldName("kind", "kind"),
+      discriminatorMapping = Map(
+        YEnum.Y1.toString -> SRef(y1ConfSName),
+        YEnum.Y2.toString -> SRef(y2ConfSName),
+        YEnum.Y3.toString -> SRef(y3ConfSName),
+      ))
+    Schema(schemaType, Some(sname))
   }
 
   private def decodeYConf(c: HCursor, kind: String): DecodeResult[YConf] = yEnumCodec.decode(kind).flatMap { yEnum =>
