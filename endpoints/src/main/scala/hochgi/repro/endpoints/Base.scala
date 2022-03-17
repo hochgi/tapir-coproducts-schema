@@ -99,7 +99,8 @@ object Base {
       case y: Y2Conf => Some(SchemaWithValue(y2ConfSchema.asInstanceOf[Schema[Any]], y.kind))
       case y: Y3Conf => Some(SchemaWithValue(y3ConfSchema.asInstanceOf[Schema[Any]], y.kind))
     }.addDiscriminatorField(
-      discriminatorName = FieldName("kind", "kind"),
+      discriminatorName    = FieldName("kind", "kind"),
+      discriminatorSchema  = yEnumSchema,
       discriminatorMapping = Map(
         YEnum.Y1.toString -> SRef(y1ConfSName),
         YEnum.Y2.toString -> SRef(y2ConfSName),
